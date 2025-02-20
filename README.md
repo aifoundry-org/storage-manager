@@ -28,9 +28,36 @@ The storage manager exposes an API with the following endpoints:
 - `POST /content/`: Download content from the provided URL and store it in the cache.
 - `DELETE /content/<URL>`: Removes content from the cache.
 
-### 
+### GET /content/<URL>
 
+Check if a specific URL is available in the cache. Returns `200` if the provided content URL is available in the cache. Returns `404` if not available, `200` if available and complete, and `206` if available but incomplete. URL is base64-encoded.
 
-Returns if the provided content URL is available in the cache and if it is complete. Returns `404` if not available, `200` if available and complete, and `206` if available but incomplete. URL is base64-encoded.
-- `POST /content/`: Downloads content from the provided URL and stores it in the cache. Body contains json with the URL to the content. Returns `201` if successful.
-- `DELETE /content/<URL>`: Removes the aimage from the cache. URL is base64-encoded. Returns `204` if successful.
+### POST /content/
+
+Downloads content from the provided URL and stores it in the cache. Body
+contains json with the URL to the content. Returns `201` if successful.
+
+Body is as follows:
+
+```json
+{
+  "url": "<URL>"
+}
+```
+
+URL is **not** base64-encoded.
+
+You can provide credentials via the field `"credentials"` as a token. E.g.:
+
+```json
+{
+  "url": "<URL>",
+  "credentials": "<TOKEN>"
+}
+```
+
+The interpretation of the token is up to the individual downloader.
+
+### DELETE /content/<URL>
+
+Removes the aimage from the cache. URL is base64-encoded. Returns `204` if successful.
