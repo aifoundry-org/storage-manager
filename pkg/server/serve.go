@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/aifoundry-org/storage-manager/pkg/cache"
+	"github.com/aifoundry-org/storage-manager/pkg/download"
 	downloadparser "github.com/aifoundry-org/storage-manager/pkg/download/parser"
 
 	"github.com/gorilla/mux"
@@ -133,7 +134,7 @@ func (s *Server) contentPostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	var content PostRequest
+	var content download.ContentSource
 	if err := json.Unmarshal(body, &content); err != nil {
 		s.logger.Debugf("POST /content json unmarshal %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -152,7 +153,7 @@ func (s *Server) contentPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// it does not, so download it
-	downloader, err := downloadparser.Parse(content.URL)
+	downloader, err := downloadparser.Parse(content)
 	if err != nil {
 		s.logger.Debugf("POST /content error getting downloader for %s %v", content.URL, err)
 		http.Error(w, err.Error(), http.StatusBadRequest)

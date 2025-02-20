@@ -10,11 +10,12 @@ import (
 var _ download.Downloader = &downloader{}
 
 type downloader struct {
-	ref *url.URL
+	ref   *url.URL
+	creds string
 }
 
-func New(ref *url.URL) (*downloader, error) {
-	return &downloader{ref}, nil
+func New(ref *url.URL, creds string) (*downloader, error) {
+	return &downloader{ref, creds}, nil
 }
 
 func (d *downloader) Download() ([]download.KeyReader, error) {

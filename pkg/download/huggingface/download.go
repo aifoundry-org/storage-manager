@@ -18,13 +18,16 @@ type downloader struct {
 	file string
 }
 
-func New(ref *url.URL) (*downloader, error) {
+func New(ref *url.URL, creds string) (*downloader, error) {
 	// parse the name of the file and the model name from the URL
 	file := path.Base(ref.Path)
 	model := path.Base(path.Dir(ref.Path))
 	repo := hub.New(model)
 	if repo == nil {
 		return nil, fmt.Errorf("invalid huggingface reference %s", ref.String())
+	}
+	if creds != "" {
+		repo = repo.WithAuth(creds)
 	}
 	return &downloader{repo: repo, file: file}, nil
 }

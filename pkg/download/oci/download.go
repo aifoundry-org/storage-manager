@@ -15,11 +15,12 @@ import (
 var _ download.Downloader = &downloader{}
 
 type downloader struct {
-	repo *remote.Repository
-	ref  string
+	repo  *remote.Repository
+	ref   string
+	creds string
 }
 
-func New(ref *url.URL) (*downloader, error) {
+func New(ref *url.URL, creds string) (*downloader, error) {
 	parts := strings.SplitN(ref.Path, ":", 2)
 	repoName := parts[0]
 	// trim leading / off repoName, just in case

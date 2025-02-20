@@ -9,18 +9,18 @@ import (
 	"github.com/aifoundry-org/storage-manager/pkg/download/oci"
 )
 
-func Parse(source string) (download.Downloader, error) {
-	u, err := url.Parse(source)
+func Parse(source download.ContentSource) (download.Downloader, error) {
+	u, err := url.Parse(source.URL)
 	if err != nil {
 		return nil, err
 	}
 	switch u.Scheme {
 	case "http", "https":
-		return http.New(u)
+		return http.New(u, source.Credentials)
 	case "oci":
-		return oci.New(u)
+		return oci.New(u, source.Credentials)
 	case "hf", "huggingface":
-		return huggingface.New(u)
+		return huggingface.New(u, source.Credentials)
 	default:
 		return nil, &download.ErrUnsupportedScheme{}
 	}
