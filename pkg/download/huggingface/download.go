@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 
 	"github.com/aifoundry-org/storage-manager/pkg/download"
 
@@ -21,7 +22,8 @@ type downloader struct {
 func New(ref *url.URL, creds string) (*downloader, error) {
 	// parse the name of the file and the model name from the URL
 	file := path.Base(ref.Path)
-	model := path.Base(path.Dir(ref.Path))
+	model := path.Dir(ref.Path)
+	model = strings.TrimLeft(model, "/")
 	repo := hub.New(model)
 	if repo == nil {
 		return nil, fmt.Errorf("invalid huggingface reference %s", ref.String())

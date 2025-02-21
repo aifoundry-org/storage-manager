@@ -166,7 +166,21 @@ func (s *Server) contentPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var savedKeys []string
 	for _, downloadReader := range downloadReaders {
+		// if the key does not exist, we need to download and hash the content, then transfer that in and clear it
+		if downloadReader.Key == "" {
+			key, size, reader, err := downloadAndHash(downloadReader.Reader)
+			if err != nil {
+				s.logger.Debugf("POST /content error downloading and hashing %v", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			downloadReader.Key = key
+			downloadReader.Size = size
+			downloadReader.Reader = reader
+		}
+		savedKeys = append(savedKeys, downloadReader.Key)
 		defer downloadReader.Reader.Close()
 		exists, err := s.cache.Exists(downloadReader.Key)
 		if err != nil {
@@ -185,7 +199,7 @@ func (s *Server) contentPostHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if err := s.cache.Name(downloadReaders[0].Key, content.URL); err != nil {
+	if err := s.cache.Name(savedKeys[0], content.URL); err != nil {
 		s.logger.Debugf("POST /content error tagging root %s %v", content.URL, err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
