@@ -16,17 +16,24 @@ import (
 var _ download.Downloader = &downloader{}
 
 type downloader struct {
-	authToken string
+	creds     string
+	credsType string
 	model     string
 	file      string
 }
 
-func New(ref *url.URL, creds string) (*downloader, error) {
+func New(ref *url.URL, creds, credsType string) (*downloader, error) {
 	// parse the name of the file and the model name from the URL
 	file := path.Base(ref.Path)
 	model := path.Dir(ref.Path)
 	model = strings.TrimLeft(model, "/")
-	return &downloader{model: model, file: file, authToken: creds}, nil
+	if credsType == "" {
+		credsType = "Bearer"
+	}
+	if credsType != "Bearer" {
+		return nil, fmt.Errorf("unsupported credentials type %s", credsType)
+	}
+	return &downloader{model: model, file: file, creds: creds, credsType: credsType}, nil
 }
 
 func (d *downloader) Info() (*RepoInfo, error) {
@@ -37,8 +44,10 @@ func (d *downloader) Info() (*RepoInfo, error) {
 		return nil, err
 	}
 	// Set the authorization header
-	if d.authToken == "" {
-		req.Header.Set("Authorization", "Bearer "+d.authToken)
+	if d.creds == "" {
+		credsType := d.credsType
+		// we only support Bearer
+		req.Header.Set("Authorization", fmt.Sprintf("%s %s", credsType, d.creds))
 	}
 	// Use an HTTP client to send the request
 	client := &http.Client{}
@@ -84,8 +93,10 @@ func (d *downloader) Download() ([]download.KeyReader, error) {
 		return nil, err
 	}
 	// Set the authorization header
-	if d.authToken == "" {
-		req.Header.Set("Authorization", "Bearer "+d.authToken)
+	if d.creds == "" {
+		credsType := d.credsType
+		// we only support Bearer
+		req.Header.Set("Authorization", fmt.Sprintf("%s %s", credsType, d.creds))
 	}
 	// Use an HTTP client to send the request
 	client := &http.Client{}

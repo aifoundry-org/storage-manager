@@ -47,7 +47,9 @@ Body is as follows:
 
 URL is **not** base64-encoded.
 
-You can provide credentials via the field `"credentials"` as a token. E.g.:
+The URL format determines which downloader is used.
+
+You can provide credentials via the field `"credentials"` and an optional `"credentialsType"` field. E.g.:
 
 ```json
 {
@@ -56,8 +58,42 @@ You can provide credentials via the field `"credentials"` as a token. E.g.:
 }
 ```
 
+or
+
+```json
+{
+  "url": "<URL>",
+  "credentials": "<TOKEN>",
+  "credentialsType": "Bearer"
+}
+```
+
 The interpretation of the token is up to the individual downloader.
 
 ### DELETE /content/<URL>
 
 Removes the aimage from the cache. URL is base64-encoded. Returns `204` if successful.
+
+## Downloaders
+
+The following downloaders and request formats are supported.
+
+### OCI
+
+* URL format: `oci://<registry>/<repository>/<image>:<tag>` or `oci://<registry>/<repository>/<image>@<digest>`
+* Credentials: token
+* Credentials Type: Only `Bearer` supported, defaults to `Bearer`
+
+### HuggingFace
+
+* URL format: `huggingface://<registry>/<model>/<file>` or `hf://<registry>/<model>/<file>`; if no `<registry>` is supplied, defaults to `huggingface.co`, e.g. `hf:///unsloth/SmolLM2-135M-Instruct-GGUF/SmolLM2-135M-Instruct-Q2_K.gguf` (note three `/` following `hf`)
+* Credentials: token
+* Credentials Type: Only `Bearer` supported, defaults to `Bearer`
+
+### http
+
+Supports both http and https
+
+* URL format: `http://<host>/<path>` or `https://<host>/<path>`
+* Credentials: token or username-password, `:`-separated and base64-encoded
+* Credentials Type: `Bearer` or `Basic`, defaults to `Bearer`

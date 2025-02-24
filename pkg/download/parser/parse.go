@@ -16,11 +16,11 @@ func Parse(source download.ContentSource) (download.Downloader, error) {
 	}
 	switch u.Scheme {
 	case "http", "https":
-		return http.New(u, source.Credentials)
+		return http.New(u, source.Credentials, source.CredentialsType)
 	case "oci":
-		return oci.New(u, source.Credentials)
+		return oci.New(u, source.Credentials, source.CredentialsType)
 	case "hf", "huggingface":
-		return huggingface.New(u, source.Credentials)
+		return huggingface.New(u, source.Credentials, source.CredentialsType)
 	default:
 		return nil, &download.ErrUnsupportedScheme{}
 	}

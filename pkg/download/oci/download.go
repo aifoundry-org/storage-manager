@@ -2,6 +2,7 @@ package oci
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/url"
 	"strings"
@@ -10,17 +11,19 @@ import (
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"oras.land/oras-go/v2/registry/remote"
+	"oras.land/oras-go/v2/registry/remote/auth"
 )
 
 var _ download.Downloader = &downloader{}
 
 type downloader struct {
-	repo  *remote.Repository
-	ref   string
-	creds string
+	repo      *remote.Repository
+	ref       string
+	creds     string
+	credsType string
 }
 
-func New(ref *url.URL, creds string) (*downloader, error) {
+func New(ref *url.URL, creds, credsType string) (*downloader, error) {
 	parts := strings.SplitN(ref.Path, ":", 2)
 	repoName := parts[0]
 	// trim leading / off repoName, just in case
@@ -33,7 +36,30 @@ func New(ref *url.URL, creds string) (*downloader, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not create repository: %v", err)
 	}
-	return &downloader{repo: repo, ref: refName}, nil
+	if creds != "" {
+		authClient := auth.DefaultClient
+		authCreds := auth.Credential{}
+		credsType = strings.ToLower(credsType)
+		switch credsType {
+		case "basic":
+			decodedCreds, err := base64.StdEncoding.DecodeString(creds)
+			if err != nil {
+				return nil, fmt.Errorf("could not decode basic credentials: %v", err)
+			}
+			parts := strings.SplitN(string(decodedCreds), ":", 2)
+			if len(parts) != 2 {
+				return nil, fmt.Errorf("invalid basic credentials: %s", string(decodedCreds))
+			}
+			authCreds.Username = parts[0]
+			authCreds.Password = parts[1]
+		case "bearer":
+			authCreds.AccessToken = creds
+		default:
+			return nil, fmt.Errorf("unsupported credentials type: %s", credsType)
+		}
+		authClient.Credential = auth.StaticCredential(repo.Reference.Registry, authCreds)
+	}
+	return &downloader{repo: repo, ref: refName, creds: creds, credsType: credsType}, nil
 }
 
 func (d *downloader) Download() ([]download.KeyReader, error) {
