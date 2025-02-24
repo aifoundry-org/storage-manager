@@ -97,3 +97,11 @@ Supports both http and https
 * URL format: `http://<host>/<path>` or `https://<host>/<path>`
 * Credentials: token or username-password, `:`-separated and base64-encoded
 * Credentials Type: `Bearer` or `Basic`, defaults to `Bearer`
+
+### ollama
+
+**Future** planned support. Closely resembles OCI.
+
+* URL format: `ollama://<host>/<path>`; if not host is provided, defaults to `ollama.com`, e.g. `ollama:///<path>` (note three `/` following `ollama`)
+* Credentials: token
+* Credentials Type: Only `Bearer` supported, defaults to `Bearer`

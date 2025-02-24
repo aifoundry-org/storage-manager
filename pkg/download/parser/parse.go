@@ -7,6 +7,7 @@ import (
 	"github.com/aifoundry-org/storage-manager/pkg/download/http"
 	"github.com/aifoundry-org/storage-manager/pkg/download/huggingface"
 	"github.com/aifoundry-org/storage-manager/pkg/download/oci"
+	"github.com/aifoundry-org/storage-manager/pkg/download/ollama"
 )
 
 func Parse(source download.ContentSource) (download.Downloader, error) {
@@ -21,6 +22,8 @@ func Parse(source download.ContentSource) (download.Downloader, error) {
 		return oci.New(u, source.Credentials, source.CredentialsType)
 	case "hf", "huggingface":
 		return huggingface.New(u, source.Credentials, source.CredentialsType)
+	case "ollama":
+		return ollama.New(u, source.Credentials, source.CredentialsType)
 	default:
 		return nil, &download.ErrUnsupportedScheme{}
 	}
