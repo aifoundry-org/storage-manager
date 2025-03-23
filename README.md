@@ -32,10 +32,26 @@ The storage manager exposes an API with the following endpoints:
 
 Check if a specific URL is available in the cache. Returns `200` if the provided content URL is available in the cache. Returns `404` if not available, `200` if available and complete, and `206` if available but incomplete. URL is base64-encoded.
 
+Response:
+```json
+{
+  "url": "<URL>",
+  "digest": "<DIGEST>"
+}
+```
+
 ### POST /content/
 
 Downloads content from the provided URL and stores it in the cache. Body
 contains json with the URL to the content. Returns `201` if successful.
+
+Response:
+```json
+{
+  "url": "<URL>",
+  "digest": "<DIGEST>"
+}
+```
 
 Body is as follows:
 
@@ -73,6 +89,9 @@ The interpretation of the token is up to the individual downloader.
 ### DELETE /content/<URL>
 
 Removes the aimage from the cache. URL is base64-encoded. Returns `204` if successful.
+
+Response:
+No content in the response body.
 
 ## Downloaders
 

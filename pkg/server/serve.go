@@ -22,6 +22,24 @@ type Server struct {
 	logger *log.Logger
 }
 
+type contentResponse struct {
+	URL    string `json:"url"`
+	Digest string `json:"digest"`
+}
+
+func (s *Server) sendResponse(w http.ResponseWriter, url, digest string) {
+	w.WriteHeader(http.StatusOK)
+	response := contentResponse{
+		URL:    url,
+		Digest: digest,
+	}
+	encoder := json.NewEncoder(w)
+	if err := encoder.Encode(response); err != nil {
+		s.logger.Errorf("Failed to encode response: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
+}
+
 // New create a new server instance with the provided configuration
 func New(addr string, cache cache.Cache, logger *log.Logger) *Server {
 	if logger == nil {
@@ -66,25 +84,26 @@ func (s *Server) contentGetHandler(w http.ResponseWriter, r *http.Request) {
 	s.logger.Debugf("GET /content/%s", urlencoded)
 	u, err := base64.StdEncoding.DecodeString(urlencoded)
 	if err != nil {
-		log.Debugf("GET /content/%s %v", urlencoded, err)
+		s.logger.Debugf("GET /content/%s %v", urlencoded, err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	s.logger.Debugf("GET %s", u)
+	s.logger.Debugf("GET %s", string(u))
+
 	key, err := s.cache.Resolve(string(u))
 	if err != nil {
-		log.Debugf("cache resolve %s %v", u, err)
+		s.logger.Debugf("cache resolve %s %v", u, err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if key == "" {
-		log.Debugf("key not found %s", u)
+		s.logger.Debugf("key not found %s", u)
 		http.Error(w, fmt.Sprintf("content not found %s %s", urlencoded, u), http.StatusNotFound)
 		return
 	}
-	log.Debugf("found %s", u)
-	w.WriteHeader(http.StatusOK)
+	s.logger.Debugf("found %s", u)
+	s.sendResponse(w, string(u), key)
 }
 
 // contentDeleteHandler remove the selected content from the cache
@@ -140,6 +159,7 @@ func (s *Server) contentPostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
 	// check if the content is in the cache
 	exists, err := s.cache.Exists(content.URL)
 	if err != nil {
@@ -147,9 +167,24 @@ func (s *Server) contentPostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	if exists {
 		s.logger.Debugf("POST /content %s already exists", content.URL)
-		w.WriteHeader(http.StatusOK)
+		key, err := s.cache.Resolve(content.URL)
+		if err != nil {
+			s.logger.Debugf("cache resolve %s %v", content.URL, err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if key == "" {
+			s.logger.Debugf("key not found %s", content.URL)
+			http.Error(w, fmt.Sprintf("content not found %s", content.URL), http.StatusNotFound)
+			return
+		}
+
+		s.sendResponse(w, content.URL, key)
+		s.logger.Debugf("POST /content success %s", content.URL)
 		return
 	}
 	// it does not, so download it
@@ -204,6 +239,5 @@ func (s *Server) contentPostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	s.logger.Debugf("POST /content success %s", content.URL)
-	w.WriteHeader(http.StatusOK)
+	s.sendResponse(w, content.URL, savedKeys[0])
 }
