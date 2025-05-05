@@ -32,6 +32,7 @@ new components and deleting existing ones.
 
 Run with --help for more information.
 		`,
+		Version: GetVersionString(),
 		PersistentPreRunE: func(c *cobra.Command, args []string) error {
 			bindFlags(cmd, v)
 			logLevel := v.GetInt("verbose")
