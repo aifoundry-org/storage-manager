@@ -40,6 +40,9 @@ jobs:
           registry: docker.io
           username: ${{ secrets.DH_REGISTRY_USERNAME }}
           password: ${{ secrets.DH_REGISTRY_TOKEN }}
+
+      - name: Set current timestamp
+        run: echo "NOW=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
       
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -51,6 +54,6 @@ jobs:
           build-args: |
             VERSION=${{ github.ref_name }}
             COMMIT=${{ github.sha }}
-            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            BUILD_DATE=${{ env.NOW }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
