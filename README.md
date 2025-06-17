@@ -1,3 +1,5 @@
+ARCHIVED: replaced by [clowder-dev/storage-manager](https://github.com/clowder-dev/storage-manager)
+
 # storage-manager
 
 Per-worker-node storage manager, responsible for retrieving aimages, models and components, storing them locally and making them available to inference engines.
